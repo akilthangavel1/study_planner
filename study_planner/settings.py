@@ -29,7 +29,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'pathfinder.urls'
+ROOT_URLCONF = 'study_planner.urls'
 
 TEMPLATES = [
     {
@@ -47,7 +47,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'pathfinder.wsgi.application'
+WSGI_APPLICATION = 'study_planner.wsgi.application'
 
 DATABASES = {
     'default': {
