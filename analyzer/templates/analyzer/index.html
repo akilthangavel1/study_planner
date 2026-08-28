@@ -1,0 +1,485 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PathForge AI | Resume-Driven Personalized Study Roadmaps</title>
+    <meta name="description" content="Upload your resume to discover your optimal tech career path, identify skill gaps, and generate an actionable phased learning roadmap.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body class="dark-theme">
+    <!-- Ambient Background Glows -->
+    <div class="glow-orb glow-top-left"></div>
+    <div class="glow-orb glow-bottom-right"></div>
+    <div class="glow-orb glow-center"></div>
+
+    <!-- Navigation Header -->
+    <header class="app-header">
+        <div class="container header-content">
+            <div class="logo-group">
+                <div class="logo-icon">
+                    <i data-lucide="compass"></i>
+                </div>
+                <div class="logo-text">
+                    <span class="brand-name">PathForge <span class="badge-ai">AI</span></span>
+                    <span class="brand-sub">Career & Study Path Intelligence</span>
+                </div>
+            </div>
+            <div class="header-badges">
+                <span class="status-badge"><i data-lucide="sparkles"></i> 8+ Specialized Tech Tracks</span>
+                <span class="status-badge live-badge"><span class="pulse-dot"></span> Ready to Analyze</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Wrapper -->
+    <main class="main-container container">
+        <!-- Hero Intro Section -->
+        <section class="hero-section text-center">
+            <div class="hero-tag">
+                <i data-lucide="zap"></i> AI-Powered Skill Gap Analysis & Learning Roadmap
+            </div>
+            <h1 class="hero-title">
+                Upload Your Resume.<br>
+                <span class="gradient-text">Discover Your Ideal Study Path.</span>
+            </h1>
+            <p class="hero-subtitle">
+                Our intelligence engine analyzes your existing competencies, detects critical skill gaps, and generates a structured, phased curriculum with milestones and curated resources.
+            </p>
+        </section>
+
+        <!-- SINGLE FORM SECTION -->
+        <section class="form-section">
+            <div class="glass-card upload-card">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <div class="icon-bubble"><i data-lucide="file-text"></i></div>
+                        <div>
+                            <h2 class="card-title">Upload Resume & Configure Study Goals</h2>
+                            <p class="card-desc">Supported formats: PDF, DOCX, DOC, TXT (Max 10MB)</p>
+                        </div>
+                    </div>
+                </div>
+
+                {% if error_message %}
+                <div class="alert alert-error" id="form-error-alert">
+                    <i data-lucide="alert-circle"></i>
+                    <span>{{ error_message }}</span>
+                </div>
+                {% endif %}
+
+                <!-- Single Unified Form -->
+                <form id="resume-upload-form" method="POST" action="{% url 'analyzer:index' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <!-- Hidden text input for sample resumes injection -->
+                    <textarea name="sample_text" id="sample-text-input" class="hidden-field"></textarea>
+
+                    <!-- Drag & Drop Upload Zone -->
+                    <div class="upload-dropzone" id="drop-zone">
+                        {{ form.resume_file }}
+                        <div class="dropzone-content" id="dropzone-prompt">
+                            <div class="upload-icon-wrapper">
+                                <i data-lucide="upload-cloud" class="upload-icon"></i>
+                            </div>
+                            <h3 class="dropzone-heading">Drag and drop your resume file here</h3>
+                            <p class="dropzone-sub">or <span class="browse-btn">browse your computer</span></p>
+                            <div class="file-badges">
+                                <span class="file-tag"><i data-lucide="file-code"></i> PDF</span>
+                                <span class="file-tag"><i data-lucide="file"></i> DOCX</span>
+                                <span class="file-tag"><i data-lucide="file-text"></i> TXT</span>
+                            </div>
+                        </div>
+
+                        <!-- Selected File Preview -->
+                        <div class="file-preview-card hidden" id="file-preview">
+                            <div class="preview-icon">
+                                <i data-lucide="file-check" class="text-emerald"></i>
+                            </div>
+                            <div class="preview-info">
+                                <span class="preview-filename" id="preview-filename">resume.pdf</span>
+                                <span class="preview-filesize" id="preview-filesize">1.2 MB</span>
+                            </div>
+                            <button type="button" class="btn-icon remove-file-btn" id="btn-remove-file" title="Remove file">
+                                <i data-lucide="x"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Form Configuration Controls Grid -->
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="weekly-hours-select" class="form-label">
+                                <i data-lucide="clock"></i> Weekly Time Commitment
+                            </label>
+                            {{ form.weekly_hours }}
+                            <span class="field-hint">Dynamically calculates phase durations and target completion dates.</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="career-goal-select" class="form-label">
+                                <i data-lucide="target"></i> Target Career Track
+                            </label>
+                            {{ form.career_goal }}
+                            <span class="field-hint">Auto-detect picks the domain with your highest skill compatibility.</span>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button with Spinner -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-glow" id="btn-analyze">
+                            <span class="btn-text"><i data-lucide="sparkles"></i> Analyze Resume & Generate Study Path</span>
+                            <span class="btn-loading hidden">
+                                <div class="spinner"></div> Analyzing Skill Matrix...
+                            </span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Instant Try Section with Realistic Sample Resumes -->
+                <div class="sample-resumes-wrapper">
+                    <div class="sample-divider">
+                        <span>OR TRY INSTANTLY WITH A SAMPLE CANDIDATE PROFILE</span>
+                    </div>
+                    <div class="sample-buttons-grid">
+                        <button type="button" class="btn-sample" data-sample="junior_python_web">
+                            <div class="sample-icon"><i data-lucide="code-2"></i></div>
+                            <div class="sample-text-wrap">
+                                <strong>Junior Python Web Dev</strong>
+                                <span>Python, Django, REST, SQL, Git</span>
+                            </div>
+                        </button>
+                        <button type="button" class="btn-sample" data-sample="data_analyst_ml_aspirant">
+                            <div class="sample-icon"><i data-lucide="brain"></i></div>
+                            <div class="sample-text-wrap">
+                                <strong>Data Analyst -> ML Aspirant</strong>
+                                <span>Python, Pandas, SQL, Tableau</span>
+                            </div>
+                        </button>
+                        <button type="button" class="btn-sample" data-sample="cloud_devops_aspirant">
+                            <div class="sample-icon"><i data-lucide="cloud"></i></div>
+                            <div class="sample-text-wrap">
+                                <strong>SysAdmin -> DevOps Aspirant</strong>
+                                <span>Linux, Bash, Docker, AWS</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- RESULTS SECTION (Rendered when analysis exists) -->
+        <section class="results-section {% if not analysis %}hidden{% endif %}" id="results-container">
+            {% if analysis %}
+            <!-- Results Header / Summary Banner -->
+            <div class="glass-card result-hero-card">
+                <div class="result-hero-layout">
+                    <!-- Left: Match Score Gauge -->
+                    <div class="match-score-gauge">
+                        <div class="score-circle" data-score="{{ analysis.primary_track.match_score }}">
+                            <svg class="progress-ring" width="140" height="140">
+                                <circle class="progress-ring-bg" stroke="rgba(255,255,255,0.08)" stroke-width="10" fill="transparent" r="58" cx="70" cy="70"/>
+                                <circle class="progress-ring-fill" stroke="url(#scoreGradient)" stroke-width="10" stroke-linecap="round" fill="transparent" r="58" cx="70" cy="70" style="stroke-dasharray: 364.4; stroke-dashoffset: calc(364.4 - (364.4 * {{ analysis.primary_track.match_score }}) / 100);"/>
+                                <defs>
+                                    <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#38bdf8"/>
+                                        <stop offset="50%" stop-color="#818cf8"/>
+                                        <stop offset="100%" stop-color="#c084fc"/>
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                            <div class="score-content">
+                                <span class="score-number">{{ analysis.primary_track.match_score }}%</span>
+                                <span class="score-label">Compatibility</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Center: Track Title & Role Details -->
+                    <div class="result-details">
+                        <div class="track-badge-row">
+                            <span class="track-badge category-badge">{{ analysis.primary_track.category }}</span>
+                            <span class="track-badge exp-badge"><i data-lucide="user-check"></i> {{ analysis.candidate_experience.level }}</span>
+                            <span class="track-badge demand-badge"><i data-lucide="trending-up"></i> {{ analysis.primary_track.demand }} Demand</span>
+                        </div>
+                        <h2 class="result-track-title">{{ analysis.primary_track.title }}</h2>
+                        <p class="result-tagline">{{ analysis.primary_track.tagline }}</p>
+                        
+                        <div class="target-roles-wrap">
+                            <span class="roles-label">Target Roles:</span>
+                            {% for role in analysis.primary_track.target_roles %}
+                            <span class="role-pill">{{ role }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Right: Quick Stats & Export -->
+                    <div class="result-meta-card">
+                        <div class="meta-item">
+                            <div class="meta-icon"><i data-lucide="clock"></i></div>
+                            <div>
+                                <span class="meta-value">{{ analysis.total_estimated_weeks }} Weeks</span>
+                                <span class="meta-label">@ {{ analysis.weekly_hours }} hrs/week</span>
+                            </div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-icon"><i data-lucide="calendar"></i></div>
+                            <div>
+                                <span class="meta-value">{{ analysis.completion_date }}</span>
+                                <span class="meta-label">Est. Completion</span>
+                            </div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-icon"><i data-lucide="dollar-sign"></i></div>
+                            <div>
+                                <span class="meta-value">{{ analysis.primary_track.avg_salary_range }}</span>
+                                <span class="meta-label">Avg. Industry Compensation</span>
+                            </div>
+                        </div>
+
+                        <div class="result-actions">
+                            <a href="{% url 'analyzer:export_study_path' %}" class="btn btn-secondary btn-sm" id="btn-export-md">
+                                <i data-lucide="download"></i> Export Study Guide (.md)
+                            </a>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="window.print()">
+                                <i data-lucide="printer"></i> Print / Save PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SKILLS GAP & BREAKDOWN GRID -->
+            <div class="skills-gap-grid">
+                <!-- Left: Acquired Skills Detected -->
+                <div class="glass-card skill-card acquired-card">
+                    <div class="skill-card-header">
+                        <div class="skill-header-icon text-emerald"><i data-lucide="check-circle-2"></i></div>
+                        <div>
+                            <h3 class="skill-card-title">Acquired Competencies Detected</h3>
+                            <span class="skill-card-subtitle">{{ analysis.primary_track.all_acquired|length }} skills matched from your resume</span>
+                        </div>
+                    </div>
+                    <div class="skill-tags-list">
+                        {% if analysis.primary_track.all_acquired %}
+                            {% for skill in analysis.primary_track.all_acquired %}
+                            <span class="skill-tag tag-acquired">
+                                <i data-lucide="check"></i> {{ skill }}
+                            </span>
+                            {% endfor %}
+                        {% else %}
+                            <p class="empty-state-text">No direct domain skill overlaps found. You are starting with a fresh slate!</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Right: Skill Gaps to Bridge -->
+                <div class="glass-card skill-card gap-card">
+                    <div class="skill-card-header">
+                        <div class="skill-header-icon text-indigo"><i data-lucide="book-open"></i></div>
+                        <div>
+                            <h3 class="skill-card-title">Identified Skill Gaps to Bridge</h3>
+                            <span class="skill-card-subtitle">{{ analysis.primary_track.all_missing|length }} target skills to master in this curriculum</span>
+                        </div>
+                    </div>
+                    <div class="skill-tags-list">
+                        {% if analysis.primary_track.all_missing %}
+                            {% for skill in analysis.primary_track.all_missing %}
+                            <span class="skill-tag tag-gap">
+                                <i data-lucide="arrow-up-right"></i> {{ skill }}
+                            </span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="skill-tag tag-acquired"><i data-lucide="award"></i> All Core Skills Mastered!</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- INTERACTIVE PHASED LEARNING ROADMAP -->
+            <div class="glass-card roadmap-container">
+                <div class="roadmap-header">
+                    <div class="roadmap-title-wrap">
+                        <div class="icon-bubble"><i data-lucide="map"></i></div>
+                        <div>
+                            <h2 class="section-title">Personalized Phased Study Curriculum</h2>
+                            <p class="section-subtitle">Structured in 4 sequential learning milestones tailored to your pace.</p>
+                        </div>
+                    </div>
+                    <div class="roadmap-controls">
+                        <span class="completion-counter" id="task-progress-tracker">
+                            <i data-lucide="check-square"></i> <span id="completed-tasks-count">0</span> of <span id="total-tasks-count">0</span> Milestones Completed
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Phased Timeline Items -->
+                <div class="timeline-wrapper">
+                    {% for phase in analysis.roadmap %}
+                    <div class="timeline-phase-card" data-phase="{{ phase.phase_num }}">
+                        <div class="phase-indicator">
+                            <div class="phase-circle">{{ phase.phase_num }}</div>
+                            <div class="phase-connector"></div>
+                        </div>
+
+                        <div class="phase-body glass-card-nested">
+                            <div class="phase-header">
+                                <div class="phase-title-group">
+                                    <span class="phase-badge">Phase {{ phase.phase_num }}</span>
+                                    <h3 class="phase-name">{{ phase.title }}</h3>
+                                </div>
+                                <div class="phase-time-badge">
+                                    <i data-lucide="clock"></i> {{ phase.estimated_weeks }} Weeks ({{ phase.duration_hours }} Hours)
+                                    <span class="phase-dates">| {{ phase.start_date }} - {{ phase.end_date }}</span>
+                                </div>
+                            </div>
+
+                            <p class="phase-focus"><strong>Core Focus:</strong> {{ phase.focus }}</p>
+
+                            <!-- Key Curriculum Topics -->
+                            <div class="curriculum-block">
+                                <h4 class="curriculum-heading"><i data-lucide="list-checks"></i> Key Learning Modules & Topics:</h4>
+                                <ul class="topics-checklist">
+                                    {% for topic in phase.topics %}
+                                    <li class="topic-item">
+                                        <label class="custom-checkbox-wrap">
+                                            <input type="checkbox" class="topic-checkbox" data-phase="{{ phase.phase_num }}">
+                                            <span class="checkbox-box"></span>
+                                            <span class="topic-text">{{ topic }}</span>
+                                        </label>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+
+                            <!-- Curated Learning Resources -->
+                            <div class="resources-block">
+                                <h4 class="resources-heading"><i data-lucide="external-link"></i> Recommended Learning Resources:</h4>
+                                <div class="resources-grid">
+                                    {% for res in phase.resources %}
+                                    <a href="{{ res.url }}" target="_blank" rel="noopener noreferrer" class="resource-link-card">
+                                        <div class="resource-info">
+                                            <i data-lucide="book-bookmark" class="resource-icon"></i>
+                                            <span class="resource-name">{{ res.name }}</span>
+                                        </div>
+                                        <div class="resource-badges">
+                                            {% if res.free %}
+                                            <span class="badge-free">Free</span>
+                                            {% else %}
+                                            <span class="badge-paid">Paid / Premium</span>
+                                            {% endif %}
+                                            <i data-lucide="arrow-up-right" class="arrow-icon"></i>
+                                        </div>
+                                    </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Phase Milestone Project -->
+                            <div class="milestone-box">
+                                <div class="milestone-icon"><i data-lucide="trophy"></i></div>
+                                <div class="milestone-content">
+                                    <strong>Phase {{ phase.phase_num }} Capstone Milestone:</strong>
+                                    <p>{{ phase.milestone }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- INDUSTRY CERTIFICATIONS & INTERVIEW READINESS -->
+            <div class="glass-card certs-card">
+                <div class="certs-header">
+                    <div class="icon-bubble"><i data-lucide="award"></i></div>
+                    <div>
+                        <h3 class="section-title">Recommended Industry Certifications</h3>
+                        <p class="section-subtitle">High-value credentials that solidify your portfolio for recruiter screening.</p>
+                    </div>
+                </div>
+                <div class="certs-grid">
+                    {% for cert in analysis.primary_track.recommended_certifications %}
+                    <div class="cert-item-card">
+                        <div class="cert-badge-icon"><i data-lucide="shield-check"></i></div>
+                        <div class="cert-details">
+                            <span class="cert-title">{{ cert }}</span>
+                            <span class="cert-validation">Industry Recognized Credential</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- ALTERNATIVE CAREER PATHWAYS SECTION -->
+            <div class="glass-card alt-tracks-container">
+                <div class="alt-header">
+                    <div class="icon-bubble"><i data-lucide="git-branch"></i></div>
+                    <div>
+                        <h3 class="section-title">Explore Alternative Career Pathways</h3>
+                        <p class="section-subtitle">How your skills match with other specialized technology trajectories.</p>
+                    </div>
+                </div>
+
+                <div class="alt-tracks-grid">
+                    {% for track in analysis.alternative_tracks %}
+                    <div class="alt-track-card" data-track-id="{{ track.id }}">
+                        <div class="alt-card-top">
+                            <span class="alt-match-pill">{{ track.match_score }}% Match</span>
+                            <span class="alt-category">{{ track.category }}</span>
+                        </div>
+                        <h4 class="alt-title">{{ track.title }}</h4>
+                        <p class="alt-desc">{{ track.tagline }}</p>
+                        
+                        <div class="alt-skills-summary">
+                            <div class="alt-stat">
+                                <span class="stat-num text-emerald">{{ track.acquired_core|length }}</span>
+                                <span class="stat-lbl">Core Skills Owned</span>
+                            </div>
+                            <div class="alt-stat">
+                                <span class="stat-num text-amber">{{ track.missing_core|length }}</span>
+                                <span class="stat-lbl">Core Gaps</span>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-outline-sm btn-switch-track" data-track-id="{{ track.id }}">
+                            View This Study Path <i data-lucide="arrow-right"></i>
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </section>
+
+        <!-- Dynamic Results Container for AJAX Injections -->
+        <div id="dynamic-results-root"></div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="container footer-content">
+            <div class="footer-left">
+                <p><strong>PathForge AI</strong> &copy; 2026. Built with Django, HTML5, Vanilla CSS & Modern JS.</p>
+            </div>
+            <div class="footer-right">
+                <span class="footer-tag"><i data-lucide="shield"></i> Client-Side Privacy First &bull; No permanent resume storage</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Application JavaScript -->
+    <script src="{% static 'js/app.js' %}"></script>
+</body>
+</html>
