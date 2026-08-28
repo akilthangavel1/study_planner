@@ -1,5 +1,7 @@
 /**
- * PathForge AI - Frontend Interactive Logic
+ * Study Planner AI - Frontend Interactive Logic
+ * Handles file dropzone, validation, dynamic sample selection, AJAX submission,
+ * interactive accordion milestones, checklist states, and theme interactions.
  */
 
 document.addEventListener('DOMContentLoaded', () => {

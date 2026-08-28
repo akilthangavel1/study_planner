@@ -1,1 +1,1 @@
-"""Pathfinder Django Project Package."""
+"""Study Planner Django Project Package."""

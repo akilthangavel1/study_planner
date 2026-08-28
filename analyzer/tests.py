@@ -56,7 +56,7 @@ class ViewsTestCase(TestCase):
     def test_index_get(self):
         response = self.client.get(reverse('analyzer:index'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "PathForge")
+        self.assertContains(response, "Study Planner")
         self.assertContains(response, "Upload Your Resume")
 
     def test_index_post_valid_txt_file(self):
