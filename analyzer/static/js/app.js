@@ -1,7 +1,7 @@
 /**
  * Study Planner AI - Frontend Interactive Logic
  * Handles file dropzone, validation, dynamic sample selection, AJAX submission,
- * interactive accordion milestones, checklist states, and theme interactions.
+ * interactive milestone checklist states, and track switching using Bootstrap 5.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -32,11 +32,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Drag & Drop File Upload Interactions
     // ------------------------------------------------------------------------
     if (dropZone && fileInput) {
+        // Clicking dropzone triggers file input
+        dropZone.addEventListener('click', (e) => {
+            if (e.target.closest('#btn-remove-file')) return;
+            if (fileInput) {
+                fileInput.click();
+            }
+        });
+
         ['dragenter', 'dragover'].forEach(eventName => {
             dropZone.addEventListener(eventName, (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                dropZone.classList.add('dragover');
+                dropZone.classList.add('border-warning', 'bg-body-secondary');
             }, false);
         });
 
@@ -44,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
             dropZone.addEventListener(eventName, (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                dropZone.classList.remove('dragover');
+                dropZone.classList.remove('border-warning', 'bg-body-secondary');
             }, false);
         });
 
@@ -75,11 +83,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleFileSelection(file) {
         if (!file) return;
         const sizeFormatted = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
-        previewFilename.textContent = file.name;
-        previewFilesize.textContent = sizeFormatted;
+        if (previewFilename) previewFilename.textContent = file.name;
+        if (previewFilesize) previewFilesize.textContent = sizeFormatted;
 
-        dropzonePrompt.classList.add('hidden');
-        filePreview.classList.remove('hidden');
+        if (dropzonePrompt) dropzonePrompt.classList.add('d-none');
+        if (filePreview) {
+            filePreview.classList.remove('d-none');
+            filePreview.classList.add('d-flex');
+        }
 
         // Clear sample text if user chose a real file
         if (sampleTextInput) {
@@ -90,8 +101,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function clearFileSelection() {
         if (fileInput) fileInput.value = '';
         if (sampleTextInput) sampleTextInput.value = '';
-        dropzonePrompt.classList.remove('hidden');
-        filePreview.classList.add('hidden');
+        if (dropzonePrompt) dropzonePrompt.classList.remove('d-none');
+        if (filePreview) {
+            filePreview.classList.add('d-none');
+            filePreview.classList.remove('d-flex');
+        }
     }
 
     // ------------------------------------------------------------------------
@@ -99,7 +113,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ------------------------------------------------------------------------
     if (uploadForm) {
         uploadForm.addEventListener('submit', (e) => {
-            // Check if file is selected or sample text is filled
             const hasFile = fileInput && fileInput.files.length > 0;
             const hasSample = sampleTextInput && sampleTextInput.value.trim().length > 0;
 
@@ -119,12 +132,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnLoading = btnAnalyze.querySelector('.btn-loading');
 
         if (isLoading) {
-            btnText.classList.add('hidden');
-            btnLoading.classList.remove('hidden');
+            if (btnText) btnText.classList.add('d-none');
+            if (btnLoading) {
+                btnLoading.classList.remove('d-none');
+                btnLoading.classList.add('d-flex');
+            }
             btnAnalyze.disabled = true;
         } else {
-            btnText.classList.remove('hidden');
-            btnLoading.classList.add('hidden');
+            if (btnText) btnText.classList.remove('d-none');
+            if (btnLoading) {
+                btnLoading.classList.add('d-none');
+                btnLoading.classList.remove('d-flex');
+            }
             btnAnalyze.disabled = false;
         }
     }
@@ -222,7 +241,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (currentAnalysisData && currentAnalysisData.raw_text_snippet) {
                     reAnalyzeWithTrack(trackId);
                 } else if (uploadForm) {
-                    // Scroll to top and highlight
                     uploadForm.scrollIntoView({ behavior: 'smooth' });
                 }
             });
@@ -260,7 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ------------------------------------------------------------------------
-    // 6. Dynamic Client-Side Result Renderer (for seamless AJAX testing)
+    // 6. Dynamic Client-Side Result Renderer (Bootstrap 5 CDN Compatible)
     // ------------------------------------------------------------------------
     function renderDynamicResults(data) {
         const root = document.getElementById('results-container');
@@ -271,81 +289,82 @@ document.addEventListener('DOMContentLoaded', () => {
         let acquiredTags = '';
         if (track.all_acquired && track.all_acquired.length > 0) {
             acquiredTags = track.all_acquired.map(s => `
-                <span class="skill-tag tag-acquired">
+                <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 fs-6 rounded-pill d-inline-flex align-items-center gap-1">
                     <i data-lucide="check"></i> ${s}
                 </span>
             `).join('');
         } else {
-            acquiredTags = '<p class="empty-state-text">No direct domain skill overlaps found. You are starting fresh!</p>';
+            acquiredTags = '<p class="text-secondary small mb-0">No direct domain skill overlaps found. You are starting with a fresh slate!</p>';
         }
 
         let missingTags = '';
         if (track.all_missing && track.all_missing.length > 0) {
             missingTags = track.all_missing.map(s => `
-                <span class="skill-tag tag-gap">
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 fs-6 rounded-pill d-inline-flex align-items-center gap-1">
                     <i data-lucide="arrow-up-right"></i> ${s}
                 </span>
             `).join('');
         } else {
-            missingTags = '<span class="skill-tag tag-acquired"><i data-lucide="award"></i> All Core Skills Mastered!</span>';
+            missingTags = '<span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 fs-6 rounded-pill d-inline-flex align-items-center gap-1"><i data-lucide="award"></i> All Core Skills Mastered!</span>';
         }
 
         let roadmapPhasesHtml = data.roadmap.map(phase => {
-            const topicsHtml = phase.topics.map(t => `
-                <li class="topic-item">
-                    <label class="custom-checkbox-wrap">
-                        <input type="checkbox" class="topic-checkbox" data-phase="${phase.phase_num}">
-                        <span class="checkbox-box"></span>
-                        <span class="topic-text">${t}</span>
-                    </label>
-                </li>
+            const topicsHtml = phase.topics.map((t, idx) => `
+                <div class="col-12 col-md-6">
+                    <div class="form-check card card-body bg-body-secondary border-0 p-3 rounded-3 flex-row align-items-center gap-2">
+                        <input class="form-check-input topic-checkbox m-0" type="checkbox" data-phase="${phase.phase_num}" id="dyn-phase-${phase.phase_num}-topic-${idx}">
+                        <label class="form-check-label text-body w-100" for="dyn-phase-${phase.phase_num}-topic-${idx}">
+                            ${t}
+                        </label>
+                    </div>
+                </div>
             `).join('');
 
             const resourcesHtml = phase.resources.map(r => `
-                <a href="${r.url}" target="_blank" rel="noopener noreferrer" class="resource-link-card">
-                    <div class="resource-info">
-                        <i data-lucide="book-bookmark" class="resource-icon"></i>
-                        <span class="resource-name">${r.name}</span>
-                    </div>
-                    <div class="resource-badges">
-                        <span class="${r.free ? 'badge-free' : 'badge-paid'}">${r.free ? 'Free' : 'Paid / Premium'}</span>
-                        <i data-lucide="arrow-up-right" class="arrow-icon"></i>
-                    </div>
-                </a>
+                <div class="col-12 col-md-6">
+                    <a href="${r.url}" target="_blank" rel="noopener noreferrer" class="card card-body bg-body-secondary border-0 rounded-3 text-decoration-none text-body p-3 h-100 d-flex flex-row justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2 text-truncate">
+                            <i data-lucide="book-bookmark" class="text-primary flex-shrink-0"></i>
+                            <span class="fw-medium text-truncate">${r.name}</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                            <span class="badge ${r.free ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-warning-subtle text-warning border border-warning-subtle'}">${r.free ? 'Free' : 'Paid'}</span>
+                            <i data-lucide="arrow-up-right" class="text-secondary"></i>
+                        </div>
+                    </a>
+                </div>
             `).join('');
 
             return `
-                <div class="timeline-phase-card" data-phase="${phase.phase_num}">
-                    <div class="phase-indicator">
-                        <div class="phase-circle">${phase.phase_num}</div>
-                        <div class="phase-connector"></div>
+                <div class="card bg-body border border-secondary-subtle rounded-4 p-4 shadow-sm" data-phase="${phase.phase_num}">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-primary fs-6 px-3 py-2 rounded-pill">Phase ${phase.phase_num}</span>
+                            <h3 class="h5 fw-bold mb-0">${phase.title}</h3>
+                        </div>
+                        <div class="badge bg-body-secondary text-secondary-emphasis border border-secondary-subtle px-3 py-2 rounded-pill">
+                            <i data-lucide="clock" class="me-1"></i> ${phase.estimated_weeks} Weeks (${phase.duration_hours} Hours)
+                            <span class="ms-1">| ${phase.start_date} - ${phase.end_date}</span>
+                        </div>
                     </div>
-                    <div class="phase-body glass-card-nested">
-                        <div class="phase-header">
-                            <div class="phase-title-group">
-                                <span class="phase-badge">Phase ${phase.phase_num}</span>
-                                <h3 class="phase-name">${phase.title}</h3>
-                            </div>
-                            <div class="phase-time-badge">
-                                <i data-lucide="clock"></i> ${phase.estimated_weeks} Weeks (${phase.duration_hours} Hours)
-                                <span class="phase-dates">| ${phase.start_date} - ${phase.end_date}</span>
-                            </div>
-                        </div>
-                        <p class="phase-focus"><strong>Core Focus:</strong> ${phase.focus}</p>
-                        <div class="curriculum-block">
-                            <h4 class="curriculum-heading"><i data-lucide="list-checks"></i> Key Learning Modules & Topics:</h4>
-                            <ul class="topics-checklist">${topicsHtml}</ul>
-                        </div>
-                        <div class="resources-block">
-                            <h4 class="resources-heading"><i data-lucide="external-link"></i> Recommended Learning Resources:</h4>
-                            <div class="resources-grid">${resourcesHtml}</div>
-                        </div>
-                        <div class="milestone-box">
-                            <div class="milestone-icon"><i data-lucide="trophy"></i></div>
-                            <div class="milestone-content">
-                                <strong>Phase ${phase.phase_num} Capstone Milestone:</strong>
-                                <p>${phase.milestone}</p>
-                            </div>
+                    <p class="mb-4"><strong>Core Focus:</strong> <span class="text-secondary">${phase.focus}</span></p>
+                    <div class="mb-4">
+                        <h4 class="h6 fw-bold mb-3 d-flex align-items-center gap-2">
+                            <i data-lucide="list-checks" class="text-primary"></i> Key Learning Modules & Topics:
+                        </h4>
+                        <div class="row g-2">${topicsHtml}</div>
+                    </div>
+                    <div class="mb-4">
+                        <h4 class="h6 fw-bold mb-3 d-flex align-items-center gap-2">
+                            <i data-lucide="external-link" class="text-primary"></i> Recommended Learning Resources:
+                        </h4>
+                        <div class="row g-2">${resourcesHtml}</div>
+                    </div>
+                    <div class="alert alert-primary d-flex align-items-start gap-3 mb-0 rounded-3" role="alert">
+                        <div class="text-primary fs-4 mt-1"><i data-lucide="trophy"></i></div>
+                        <div>
+                            <strong class="d-block mb-1">Phase ${phase.phase_num} Capstone Milestone:</strong>
+                            <div class="small">${phase.milestone}</div>
                         </div>
                     </div>
                 </div>
@@ -353,108 +372,112 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
 
         let certsHtml = track.recommended_certifications.map(c => `
-            <div class="cert-item-card">
-                <div class="cert-badge-icon"><i data-lucide="shield-check"></i></div>
-                <div class="cert-details">
-                    <span class="cert-title">${c}</span>
-                    <span class="cert-validation">Industry Recognized Credential</span>
+            <div class="col-12 col-md-4">
+                <div class="card bg-body border-secondary-subtle p-3 rounded-3 h-100 d-flex flex-row align-items-center gap-3">
+                    <div class="bg-success-subtle text-success p-2 rounded-2">
+                        <i data-lucide="shield-check"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold">${c}</div>
+                        <small class="text-secondary">Industry Recognized Credential</small>
+                    </div>
                 </div>
             </div>
         `).join('');
 
         let altTracksHtml = data.alternative_tracks.map(alt => `
-            <div class="alt-track-card" data-track-id="${alt.id}">
-                <div class="alt-card-top">
-                    <span class="alt-match-pill">${alt.match_score}% Match</span>
-                    <span class="alt-category">${alt.category}</span>
-                </div>
-                <h4 class="alt-title">${alt.title}</h4>
-                <p class="alt-desc">${alt.tagline}</p>
-                <div class="alt-skills-summary">
-                    <div class="alt-stat">
-                        <span class="stat-num text-emerald">${alt.acquired_core ? alt.acquired_core.length : 0}</span>
-                        <span class="stat-lbl">Core Skills Owned</span>
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card bg-body border-secondary-subtle rounded-4 p-4 h-100 d-flex flex-column justify-content-between shadow-sm" data-track-id="${alt.id}">
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">${alt.match_score}% Match</span>
+                            <span class="badge bg-secondary">${alt.category}</span>
+                        </div>
+                        <h4 class="h5 fw-bold mb-2">${alt.title}</h4>
+                        <p class="text-secondary small mb-3">${alt.tagline}</p>
+                        <div class="row g-2 text-center mb-4">
+                            <div class="col-6">
+                                <div class="bg-body-secondary p-2 rounded-2">
+                                    <div class="fw-bold text-success">${alt.acquired_core ? alt.acquired_core.length : 0}</div>
+                                    <small class="text-secondary" style="font-size: 0.75rem;">Skills Owned</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="bg-body-secondary p-2 rounded-2">
+                                    <div class="fw-bold text-warning">${alt.missing_core ? alt.missing_core.length : 0}</div>
+                                    <small class="text-secondary" style="font-size: 0.75rem;">Core Gaps</small>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="alt-stat">
-                        <span class="stat-num text-amber">${alt.missing_core ? alt.missing_core.length : 0}</span>
-                        <span class="stat-lbl">Core Gaps</span>
-                    </div>
+                    <button type="button" class="btn btn-outline-primary w-100 btn-switch-track d-flex align-items-center justify-content-center gap-2" data-track-id="${alt.id}">
+                        View This Study Path <i data-lucide="arrow-right"></i>
+                    </button>
                 </div>
-                <button type="button" class="btn btn-outline-sm btn-switch-track" data-track-id="${alt.id}">
-                    View This Study Path <i data-lucide="arrow-right"></i>
-                </button>
             </div>
         `).join('');
 
-        const strokeDashoffset = 364.4 - (364.4 * track.match_score) / 100;
-
         root.innerHTML = `
-            <!-- Results Header / Summary Banner -->
-            <div class="glass-card result-hero-card">
-                <div class="result-hero-layout">
-                    <div class="match-score-gauge">
-                        <div class="score-circle">
-                            <svg class="progress-ring" width="140" height="140">
-                                <circle class="progress-ring-bg" stroke="rgba(255,255,255,0.08)" stroke-width="10" fill="transparent" r="58" cx="70" cy="70"/>
-                                <circle class="progress-ring-fill" stroke="url(#scoreGradient)" stroke-width="10" stroke-linecap="round" fill="transparent" r="58" cx="70" cy="70" style="stroke-dasharray: 364.4; stroke-dashoffset: ${strokeDashoffset};"/>
-                                <defs>
-                                    <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" stop-color="#38bdf8"/>
-                                        <stop offset="50%" stop-color="#818cf8"/>
-                                        <stop offset="100%" stop-color="#c084fc"/>
-                                    </linearGradient>
-                                </defs>
-                            </svg>
-                            <div class="score-content">
-                                <span class="score-number">${track.match_score}%</span>
-                                <span class="score-label">Compatibility</span>
+            <!-- Results Header / Summary Banner Card -->
+            <div class="card bg-body-tertiary border border-secondary-subtle shadow-sm rounded-4 p-4 p-md-5 mb-4">
+                <div class="row align-items-center g-4">
+                    <div class="col-12 col-lg-3 text-center">
+                        <div class="card bg-body border-primary border-opacity-50 p-4 rounded-4 shadow-sm text-center">
+                            <div class="display-4 fw-extrabold text-primary mb-1">${track.match_score}%</div>
+                            <div class="fw-semibold text-secondary-emphasis">Compatibility</div>
+                            <div class="progress mt-3" role="progressbar" aria-label="Compatibility Score" aria-valuenow="${track.match_score}" aria-valuemin="0" aria-valuemax="100" style="height: 8px;">
+                                <div class="progress-bar bg-primary progress-bar-striped progress-bar-animated" style="width: ${track.match_score}%;"></div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="result-details">
-                        <div class="track-badge-row">
-                            <span class="track-badge category-badge">${track.category}</span>
-                            <span class="track-badge exp-badge"><i data-lucide="user-check"></i> ${data.candidate_experience.level}</span>
-                            <span class="track-badge demand-badge"><i data-lucide="trending-up"></i> ${track.demand} Demand</span>
+                    <div class="col-12 col-lg-5">
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <span class="badge bg-primary">${track.category}</span>
+                            <span class="badge bg-secondary"><i data-lucide="user-check" class="me-1"></i> ${data.candidate_experience.level}</span>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle"><i data-lucide="trending-up" class="me-1"></i> ${track.demand} Demand</span>
                         </div>
-                        <h2 class="result-track-title">${track.title}</h2>
-                        <p class="result-tagline">${track.tagline}</p>
+                        <h2 class="h3 fw-bold mb-2">${track.title}</h2>
+                        <p class="text-secondary mb-3">${track.tagline}</p>
                         
-                        <div class="target-roles-wrap">
-                            <span class="roles-label">Target Roles:</span>
-                            ${track.target_roles.map(r => `<span class="role-pill">${r}</span>`).join('')}
+                        <div>
+                            <span class="fw-semibold small text-secondary-emphasis d-block mb-2">Target Career Roles:</span>
+                            <div class="d-flex flex-wrap gap-1">
+                                ${track.target_roles.map(r => `<span class="badge bg-body-secondary text-body border border-secondary-subtle px-2 py-1">${r}</span>`).join('')}
+                            </div>
                         </div>
                     </div>
 
-                    <div class="result-meta-card">
-                        <div class="meta-item">
-                            <div class="meta-icon"><i data-lucide="clock"></i></div>
-                            <div>
-                                <span class="meta-value">${data.total_estimated_weeks} Weeks</span>
-                                <span class="meta-label">@ ${data.weekly_hours} hrs/week</span>
+                    <div class="col-12 col-lg-4">
+                        <div class="card bg-body border-secondary-subtle p-3 rounded-3 mb-3">
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                <div class="bg-primary-subtle text-primary p-2 rounded-2"><i data-lucide="clock"></i></div>
+                                <div>
+                                    <div class="fw-bold">${data.total_estimated_weeks} Weeks</div>
+                                    <small class="text-secondary">@ ${data.weekly_hours} hrs/week</small>
+                                </div>
                             </div>
-                        </div>
-                        <div class="meta-item">
-                            <div class="meta-icon"><i data-lucide="calendar"></i></div>
-                            <div>
-                                <span class="meta-value">${data.completion_date}</span>
-                                <span class="meta-label">Est. Completion</span>
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                <div class="bg-success-subtle text-success p-2 rounded-2"><i data-lucide="calendar"></i></div>
+                                <div>
+                                    <div class="fw-bold">${data.completion_date}</div>
+                                    <small class="text-secondary">Est. Completion</small>
+                                </div>
                             </div>
-                        </div>
-                        <div class="meta-item">
-                            <div class="meta-icon"><i data-lucide="dollar-sign"></i></div>
-                            <div>
-                                <span class="meta-value">${track.avg_salary_range}</span>
-                                <span class="meta-label">Avg. Industry Compensation</span>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="bg-warning-subtle text-warning p-2 rounded-2"><i data-lucide="currency-dollar"></i></div>
+                                <div>
+                                    <div class="fw-bold">${track.avg_salary_range}</div>
+                                    <small class="text-secondary">Avg. Industry Compensation</small>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="result-actions">
-                            <a href="/export/" class="btn btn-secondary btn-sm">
+                        <div class="d-flex flex-column gap-2">
+                            <a href="/export/" class="btn btn-outline-primary btn-sm d-flex align-items-center justify-content-center gap-2" id="btn-export-md">
                                 <i data-lucide="download"></i> Export Study Guide (.md)
                             </a>
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="window.print()">
+                            <button type="button" class="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center gap-2" onclick="window.print()">
                                 <i data-lucide="printer"></i> Print / Save PDF
                             </button>
                         </div>
@@ -463,76 +486,80 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
 
             <!-- SKILLS GAP & BREAKDOWN GRID -->
-            <div class="skills-gap-grid">
-                <div class="glass-card skill-card acquired-card">
-                    <div class="skill-card-header">
-                        <div class="skill-header-icon text-emerald"><i data-lucide="check-circle-2"></i></div>
-                        <div>
-                            <h3 class="skill-card-title">Acquired Competencies Detected</h3>
-                            <span class="skill-card-subtitle">${track.all_acquired ? track.all_acquired.length : 0} skills matched from your resume</span>
+            <div class="row g-4 mb-4">
+                <div class="col-12 col-md-6">
+                    <div class="card bg-body-tertiary border border-secondary-subtle shadow-sm rounded-4 p-4 h-100">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="bg-success-subtle text-success rounded-3 p-2"><i data-lucide="check-circle-2"></i></div>
+                            <div>
+                                <h3 class="h5 fw-bold mb-0">Acquired Competencies Detected</h3>
+                                <small class="text-secondary">${track.all_acquired ? track.all_acquired.length : 0} skills matched from your resume</small>
+                            </div>
                         </div>
+                        <div class="d-flex flex-wrap gap-2">${acquiredTags}</div>
                     </div>
-                    <div class="skill-tags-list">${acquiredTags}</div>
                 </div>
 
-                <div class="glass-card skill-card gap-card">
-                    <div class="skill-card-header">
-                        <div class="skill-header-icon text-indigo"><i data-lucide="book-open"></i></div>
-                        <div>
-                            <h3 class="skill-card-title">Identified Skill Gaps to Bridge</h3>
-                            <span class="skill-card-subtitle">${track.all_missing ? track.all_missing.length : 0} target skills to master in this curriculum</span>
+                <div class="col-12 col-md-6">
+                    <div class="card bg-body-tertiary border border-secondary-subtle shadow-sm rounded-4 p-4 h-100">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="bg-primary-subtle text-primary rounded-3 p-2"><i data-lucide="book-open"></i></div>
+                            <div>
+                                <h3 class="h5 fw-bold mb-0">Identified Skill Gaps to Bridge</h3>
+                                <small class="text-secondary">${track.all_missing ? track.all_missing.length : 0} target skills to master in this curriculum</small>
+                            </div>
                         </div>
+                        <div class="d-flex flex-wrap gap-2">${missingTags}</div>
                     </div>
-                    <div class="skill-tags-list">${missingTags}</div>
                 </div>
             </div>
 
             <!-- INTERACTIVE PHASED LEARNING ROADMAP -->
-            <div class="glass-card roadmap-container">
-                <div class="roadmap-header">
-                    <div class="roadmap-title-wrap">
-                        <div class="icon-bubble"><i data-lucide="map"></i></div>
+            <div class="card bg-body-tertiary border border-secondary-subtle shadow-sm rounded-4 p-4 p-md-5 mb-4">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 pb-3 border-bottom border-secondary-subtle">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-primary-subtle text-primary rounded-3 p-3"><i data-lucide="map"></i></div>
                         <div>
-                            <h2 class="section-title">Personalized Phased Study Curriculum</h2>
-                            <p class="section-subtitle">Structured in 4 sequential learning milestones tailored to your pace.</p>
+                            <h2 class="h4 fw-bold mb-1">Personalized Phased Study Curriculum</h2>
+                            <p class="text-secondary small mb-0">Structured in 4 sequential learning milestones tailored to your pace.</p>
                         </div>
                     </div>
-                    <div class="roadmap-controls">
-                        <span class="completion-counter" id="task-progress-tracker">
-                            <i data-lucide="check-square"></i> <span id="completed-tasks-count">0</span> of <span id="total-tasks-count">0</span> Milestones Completed
+                    <div>
+                        <span class="badge bg-body text-body border border-secondary-subtle px-3 py-2 fs-6 rounded-pill" id="task-progress-tracker">
+                            <i data-lucide="check-square" class="me-1"></i> <span id="completed-tasks-count">0</span> of <span id="total-tasks-count">0</span> Milestones Completed
                         </span>
                     </div>
                 </div>
 
-                <div class="timeline-wrapper">${roadmapPhasesHtml}</div>
+                <div class="d-flex flex-column gap-4">${roadmapPhasesHtml}</div>
             </div>
 
             <!-- INDUSTRY CERTIFICATIONS -->
-            <div class="glass-card certs-card">
-                <div class="certs-header">
-                    <div class="icon-bubble"><i data-lucide="award"></i></div>
+            <div class="card bg-body-tertiary border border-secondary-subtle shadow-sm rounded-4 p-4 p-md-5 mb-4">
+                <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom border-secondary-subtle">
+                    <div class="bg-primary-subtle text-primary rounded-3 p-3"><i data-lucide="award"></i></div>
                     <div>
-                        <h3 class="section-title">Recommended Industry Certifications</h3>
-                        <p class="section-subtitle">High-value credentials that solidify your portfolio for recruiter screening.</p>
+                        <h3 class="h4 fw-bold mb-1">Recommended Industry Certifications</h3>
+                        <p class="text-secondary small mb-0">High-value credentials that solidify your portfolio for recruiter screening.</p>
                     </div>
                 </div>
-                <div class="certs-grid">${certsHtml}</div>
+                <div class="row g-3">${certsHtml}</div>
             </div>
 
             <!-- ALTERNATIVE CAREER PATHWAYS -->
-            <div class="glass-card alt-tracks-container">
-                <div class="alt-header">
-                    <div class="icon-bubble"><i data-lucide="git-branch"></i></div>
+            <div class="card bg-body-tertiary border border-secondary-subtle shadow-sm rounded-4 p-4 p-md-5 mb-4">
+                <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom border-secondary-subtle">
+                    <div class="bg-primary-subtle text-primary rounded-3 p-3"><i data-lucide="git-branch"></i></div>
                     <div>
-                        <h3 class="section-title">Explore Alternative Career Pathways</h3>
-                        <p class="section-subtitle">How your skills match with other specialized technology trajectories.</p>
+                        <h3 class="h4 fw-bold mb-1">Explore Alternative Career Pathways</h3>
+                        <p class="text-secondary small mb-0">How your skills match with other specialized technology trajectories.</p>
                     </div>
                 </div>
-                <div class="alt-tracks-grid">${altTracksHtml}</div>
+                <div class="row g-4">${altTracksHtml}</div>
             </div>
         `;
 
-        root.classList.remove('hidden');
+        root.classList.remove('d-none');
 
         // Re-initialize Lucide Icons
         if (window.lucide) {

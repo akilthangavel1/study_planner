@@ -36,7 +36,7 @@ class ResumeUploadForm(forms.Form):
         validators=[validate_resume_extension],
         widget=forms.FileInput(attrs={
             'id': 'resume-file-input',
-            'class': 'hidden-file-input',
+            'class': 'd-none',
             'accept': '.pdf,.docx,.doc,.txt'
         }),
         label="Upload Resume"
@@ -49,7 +49,7 @@ class ResumeUploadForm(forms.Form):
         required=False,
         widget=forms.Select(attrs={
             'id': 'weekly-hours-select',
-            'class': 'form-select-control'
+            'class': 'form-select'
         }),
         label="Weekly Study Commitment"
     )
@@ -60,7 +60,7 @@ class ResumeUploadForm(forms.Form):
         required=False,
         widget=forms.Select(attrs={
             'id': 'career-goal-select',
-            'class': 'form-select-control'
+            'class': 'form-select'
         }),
         label="Target Career Aspiration"
     )
